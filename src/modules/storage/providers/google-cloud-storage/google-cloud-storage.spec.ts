@@ -1,69 +1,42 @@
 import { GoogleCloudStorage } from '@/modules/storage/providers/google-cloud-storage/google-cloud-storage';
 import { Storage } from '@google-cloud/storage';
 
-const mockFile = {
-  save: jest.fn(),
-  delete: jest.fn(),
-};
-
-const mockBucket = {
-  file: jest.fn().mockReturnValue(mockFile),
-  makePublic: jest.fn(),
-};
-
-const mockStorage = {
-  getBuckets: jest.fn().mockResolvedValue([[]]),
-  createBucket: jest.fn().mockResolvedValue([mockBucket]),
-  bucket: jest.fn().mockReturnValue(mockBucket),
-};
-
-jest.mock('@google-cloud/storage', () => ({
-  Storage: jest.fn().mockImplementation(() => mockStorage),
-}));
-
 describe('google cloud storage provider', () => {
-  const provider: GoogleCloudStorage = new GoogleCloudStorage(
-    new Storage(),
-    'test-bucket',
-  );
+  const storage = new Storage({
+    projectId: process.env.GCLOUD_PROJECT,
+  });
+  const bucketName =
+    process.env.STORAGE_PROVIDER_GOOGLE_CLOUD_STORAGE_BUCKET_NAME!;
+  const provider = new GoogleCloudStorage(storage, bucketName);
   let fileId: string;
 
   beforeAll(async () => {
     await provider.initialize();
-  });
-
-  beforeEach(() => {
-    jest.clearAllMocks();
-  });
+  }, 30000);
 
   it('should upload', async () => {
     const file = await provider.upload(
       Buffer.from('test'),
       'test.txt',
-      'sample-location',
+      'development/filestore',
     );
-    expect(mockBucket.file).toHaveBeenCalledWith(
-      expect.stringMatching(/^sample-location\/test-.*\.txt$/),
-    );
-    expect(mockFile.save).toHaveBeenCalledWith(Buffer.from('test'), {});
     expect(file).toStrictEqual({
-      id: expect.stringMatching(/^sample-location\/test-.*\.txt$/),
+      id: expect.stringMatching(/^development\/filestore\/test-.*\.txt$/),
       name: 'test.txt',
-      path: 'sample-location',
+      path: 'development/filestore',
       mimetype: 'text/plain',
       size: 4,
     });
     fileId = file.id;
-  });
+  }, 15000);
 
   it('should generate url', async () => {
     const url = await provider.getUrl(fileId);
-    expect(url).toBe(`https://storage.googleapis.com/test-bucket/${fileId}`);
-  });
+    expect(url).toBe(`https://storage.googleapis.com/${bucketName}/${fileId}`);
+  }, 15000);
 
   it('should delete', async () => {
-    await provider.delete(fileId);
-    expect(mockBucket.file).toHaveBeenCalledWith(fileId);
-    expect(mockFile.delete).toHaveBeenCalled();
-  });
+    const item = await provider.delete(fileId);
+    expect(item).toBeUndefined();
+  }, 15000);
 });

@@ -1,5 +1,7 @@
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+
 export interface StorageProvider {
-  readonly id: StorageProviderId;
+  readonly id: PROVIDER_ID;
   upload<O = Record<string, unknown>>(
     buffer: Buffer,
     name: string,
@@ -15,8 +17,6 @@ export interface StorageProvider {
     options?: O,
   ): Promise<string>;
 }
-
-export type StorageProviderId = `${string}-provider`;
 
 export interface FileInfo {
   id: string;

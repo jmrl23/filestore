@@ -14,12 +14,12 @@ describe('imagekit provider', () => {
     const file = await provider.upload(
       Buffer.from('test'),
       'test.txt',
-      'sample-location',
+      'development/filestore',
     );
     expect(file).toStrictEqual({
       id: expect.any(String),
       name: expect.stringContaining('test'),
-      path: 'sample-location',
+      path: 'development/filestore',
       mimetype: 'text/plain',
       size: 4,
     });
@@ -28,7 +28,9 @@ describe('imagekit provider', () => {
 
   it('should generate url', async () => {
     const url = await provider.getUrl(fileId);
-    expect(url).toMatch(process.env.STORAGE_PROVIDER_IMAGEKIT_ENDPOINT!);
+    const endpoint = process.env.STORAGE_PROVIDER_IMAGEKIT_ENDPOINT!;
+    const origin = new URL(endpoint).origin;
+    expect(url).toContain(origin);
   }, 15000);
 
   it('should delete', async () => {

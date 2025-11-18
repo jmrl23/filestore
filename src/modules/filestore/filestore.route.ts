@@ -4,14 +4,15 @@ import {
   DeleteFile,
   deleteFile,
 } from '@/modules/filestore/schemas/delete-files.schema';
-import {
-  SelectFilesPayload,
-  selectFilesPayloadSchema,
-} from '@/modules/filestore/schemas/select-files-payload.schema';
+
 import {
   UploadFiles,
   uploadFilesSchema,
 } from '@/modules/filestore/schemas/upload-files.schema';
+import {
+  FetchFiles,
+  fetchFilesSchema,
+} from '@/modules/filestore/schemas/fetch-files.schema';
 import { file } from '@/modules/storage/schemas/file.schema';
 import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
@@ -20,6 +21,7 @@ import fastifyMultipart from '@fastify/multipart';
 import { FastifyRequest } from 'fastify';
 import os from 'node:os';
 import z from 'zod';
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 
 export const options = asRouteOptions({
   prefix: '/filestore',
@@ -42,7 +44,7 @@ export default asRouteFunction(async function (app) {
       schema: {
         description: 'list uploaded files',
         tags: ['Filestore'],
-        querystring: selectFilesPayloadSchema,
+        querystring: fetchFilesSchema,
         response: {
           default: z.toJSONSchema(
             z.object({
@@ -56,7 +58,7 @@ export default asRouteFunction(async function (app) {
       },
       async handler(
         request: FastifyRequest<{
-          Querystring: SelectFilesPayload;
+          Querystring: FetchFiles;
         }>,
       ) {
         const files = await storageService.fetchFiles(request.query);
@@ -94,7 +96,7 @@ export default asRouteFunction(async function (app) {
           tmpdir: os.tmpdir(),
         });
         const files = await storageService.upload(
-          request.body.provider,
+          request.body.provider as PROVIDER_ID,
           request.savedRequestFiles!,
           request.body.path ?? '',
         );

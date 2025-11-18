@@ -1,5 +1,6 @@
 import z from 'zod';
 import type { MultipartFile } from '@fastify/multipart';
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 
 const LIMITS = {
   maxFiles: 10,
@@ -47,7 +48,7 @@ export const uploadFilesSchema = {
     },
     provider: {
       type: 'string',
-      enum: ['imagekit-provider', 'google-cloud-storage-provider'],
+      enum: Object.entries(PROVIDER_ID).map(([, value]) => value),
     },
   },
 };

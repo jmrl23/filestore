@@ -1,10 +1,8 @@
 import { file } from '@/db/schema';
-import {
-  StorageProvider,
-  StorageProviderId,
-} from '@/modules/storage/interfaces/storage-provider.interface';
+import { StorageProvider } from '@/modules/storage/interfaces/storage-provider.interface';
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { FetchFiles } from '@/modules/storage/schemas/fetch-files.schema';
 import { File } from '@/modules/storage/schemas/file.schema';
-import { SelectFilesPayload } from '@/modules/storage/schemas/select-files-payload.schema';
 import { MultipartFile } from '@fastify/multipart';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
@@ -27,7 +25,7 @@ export class StorageService {
   }
 
   async upload(
-    storageId: StorageProviderId,
+    storageId: PROVIDER_ID,
     files: MultipartFile[],
     location?: string,
   ): Promise<File[]> {
@@ -63,7 +61,7 @@ export class StorageService {
     return savedFiles;
   }
 
-  async fetchFiles(payload: SelectFilesPayload = {}): Promise<File[]> {
+  async fetchFiles(payload: FetchFiles = {}): Promise<File[]> {
     const conditions: (SQL | undefined)[] = [];
     if (payload.id && payload.id.length > 0) {
       conditions.push(inArray(file.id, payload.id));
@@ -135,7 +133,7 @@ export class StorageService {
     return files;
   }
 
-  async getUrl(storageId: StorageProviderId, fileId: string): Promise<string> {
+  async getUrl(storageId: PROVIDER_ID, fileId: string): Promise<string> {
     const storageProvider = this.getStoragePovider(storageId);
     const url = await storageProvider.getUrl(fileId);
     return url;

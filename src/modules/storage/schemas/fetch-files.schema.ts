@@ -1,7 +1,8 @@
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 import { z } from 'zod';
 
-export type SelectFilesPayload = z.infer<typeof selectFilesPayload>;
-export const selectFilesPayload = z.object({
+export type FetchFiles = z.infer<typeof fetchFiles>;
+export const fetchFiles = z.object({
   id: z.array(z.uuid()).optional(),
   createdAt: z
     .object({
@@ -9,7 +10,9 @@ export const selectFilesPayload = z.object({
       lte: z.iso.datetime(),
     })
     .optional(),
-  providerId: z.string().optional(),
+  providerId: z
+    .enum(Object.entries(PROVIDER_ID).map(([, value]) => value))
+    .optional(),
   location: z.string().optional(),
   mimetype: z.string().optional(),
   name: z.string().optional(),
@@ -23,6 +26,6 @@ export const selectFilesPayload = z.object({
   offset: z.number().optional(),
   order: z.enum(['asc', 'desc']).optional(),
 });
-export const selectFilesPayloadSchema = z.toJSONSchema(selectFilesPayload, {
+export const fetchFilesSchema = z.toJSONSchema(fetchFiles, {
   target: 'draft-7',
 });
