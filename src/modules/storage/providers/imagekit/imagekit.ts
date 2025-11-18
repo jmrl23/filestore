@@ -55,7 +55,7 @@ export class Imagekit implements StorageProvider {
 
     return {
       id: file.fileId,
-      name: file.name,
+      name: name,
       path: location,
       size,
       mimetype,

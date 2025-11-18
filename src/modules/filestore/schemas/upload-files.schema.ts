@@ -48,7 +48,7 @@ export const uploadFilesSchema = {
     },
     provider: {
       type: 'string',
-      enum: Object.entries(PROVIDER_ID).map(([, value]) => value),
+      enum: Object.values(PROVIDER_ID),
     },
   },
 };

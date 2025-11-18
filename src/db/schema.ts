@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import {
-  integer,
+  bigint,
   pgTable,
   text,
   timestamp,
@@ -23,15 +23,15 @@ export const file = pgTable(
       .notNull(),
     name: text().notNull(),
     path: text().default('').notNull(),
-    mimetype: text().notNull(),
-    size: integer().notNull(),
-    storageProviderId: text('storage_provider_id').notNull(),
-    storageProviderFileId: text('storage_provider_file_id').notNull(),
+    mimetype: text('mimetype').notNull(),
+    size: bigint('size', { mode: 'number' }).notNull(),
+    provider: text('storage_provider').notNull(),
+    referenceId: text('file_id').notNull(),
   },
   (table) => [
-    uniqueIndex('File_key_key').using(
+    uniqueIndex('File_reference_key_key').using(
       'btree',
-      table.storageProviderFileId.asc().nullsLast().op('text_ops'),
+      table.referenceId.asc().nullsLast().op('text_ops'),
     ),
   ],
 );

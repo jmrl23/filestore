@@ -48,8 +48,8 @@ export class StorageService {
           name: file.name,
           size: file.size,
           mimetype: file.mimetype,
-          storageProviderId: storageId,
-          storageProviderFileId: file.id,
+          provider: storageId,
+          referenceId: file.id,
         })),
       )
       .returning({
@@ -66,8 +66,8 @@ export class StorageService {
     if (payload.id && payload.id.length > 0) {
       conditions.push(inArray(file.id, payload.id));
     }
-    if (payload.providerId) {
-      conditions.push(eq(file.storageProviderId, payload.providerId));
+    if (payload.provider) {
+      conditions.push(eq(file.provider, payload.provider));
     }
     if (payload.location) {
       conditions.push(eq(file.path, payload.location));
@@ -103,8 +103,8 @@ export class StorageService {
         size: file.size,
         path: file.path,
         mimetype: file.mimetype,
-        provider: file.storageProviderId,
-        providerFileId: file.storageProviderFileId,
+        provider: file.provider,
+        referenceId: file.referenceId,
       })
       .from(file)
       .where(and(...conditions.filter(Boolean)))
@@ -122,8 +122,8 @@ export class StorageService {
     const settledFiles = await Promise.allSettled<File>(
       result.map(async (file) => {
         const storageProvider = this.getStoragePovider(file.provider);
-        const url = await storageProvider.getUrl(file.providerFileId);
-        delete (file as Record<string, unknown>).providerFileId;
+        const url = await storageProvider.getUrl(file.referenceId);
+        delete (file as Record<string, unknown>).referenceId;
         return { ...file, url };
       }),
     );
@@ -145,13 +145,13 @@ export class StorageService {
       .delete(file)
       .where(inArray(file.id, fileIds))
       .returning({
-        provider: file.storageProviderId,
-        fileId: file.storageProviderFileId,
+        provider: file.provider,
+        refereceId: file.referenceId,
       });
     Promise.all(
       files.map(async (file) => {
         const storageProvider = this.getStoragePovider(file.provider);
-        await storageProvider.delete(file.fileId);
+        await storageProvider.delete(file.refereceId);
       }),
     );
   }

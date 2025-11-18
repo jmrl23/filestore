@@ -115,6 +115,9 @@ export default asRouteFunction(async function (app) {
         description: 'delete files',
         tags: ['Filestore'],
         querystring: z.toJSONSchema(deleteFile, { target: 'draft-7' }),
+        response: {
+          204: z.toJSONSchema(z.string(), { target: 'draft-7' }),
+        },
       },
       async handler(
         request: FastifyRequest<{ Querystring: DeleteFile }>,
@@ -122,6 +125,7 @@ export default asRouteFunction(async function (app) {
       ) {
         await storageService.delete(request.query.id);
         reply.code(204);
+        return '';
       },
     });
 });

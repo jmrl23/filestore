@@ -10,9 +10,7 @@ export const fetchFiles = z.object({
       lte: z.iso.datetime(),
     })
     .optional(),
-  providerId: z
-    .enum(Object.entries(PROVIDER_ID).map(([, value]) => value))
-    .optional(),
+  provider: z.enum(Object.values(PROVIDER_ID)).optional(),
   location: z.string().optional(),
   mimetype: z.string().optional(),
   name: z.string().optional(),
