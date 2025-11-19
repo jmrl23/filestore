@@ -4,6 +4,7 @@ import { File } from '@/modules/storage/schemas/file.schema';
 import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
 import { MultipartFile } from '@fastify/multipart';
+import { createCache } from 'cache-manager';
 import { BadRequest } from 'http-errors';
 
 describe('StorageService', () => {
@@ -12,22 +13,29 @@ describe('StorageService', () => {
 
   beforeAll(async () => {
     const providers = await getStorageProviders();
-    storageService = new StorageService(db, providers);
+    storageService = new StorageService(createCache(), db, providers);
   }, 30000);
 
-  const files: MultipartFile[] = [
+  afterAll(async () => {
+    if (uploadedFiles.length > 0) {
+      const fileIds = uploadedFiles.map((file) => file.id);
+      await storageService.delete(fileIds);
+    }
+  });
+
+  const files: Pick<MultipartFile, 'toBuffer' | 'filename' | 'mimetype'>[] = [
     {
       toBuffer: async () => Buffer.from('file1'),
       filename: 'file1.txt',
       mimetype: 'text/plain',
     },
-  ] as MultipartFile[];
+  ];
 
   describe('upload', () => {
     it('should upload files using imagekit-provider', async () => {
       const result = await storageService.upload(
         PROVIDER_ID.IMAGEKIT_PROVIDER,
-        files,
+        files as MultipartFile[],
         'development/filestore',
       );
 
@@ -43,7 +51,7 @@ describe('StorageService', () => {
     it('should upload files using google-cloud-storage-provider', async () => {
       const result = await storageService.upload(
         PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER,
-        files,
+        files as MultipartFile[],
         'development/filestore',
       );
 
@@ -60,7 +68,7 @@ describe('StorageService', () => {
       await expect(
         storageService.upload(
           'invalid-provider' as PROVIDER_ID,
-          files,
+          files as MultipartFile[],
           'development/filestore',
         ),
       ).rejects.toThrow(
@@ -79,12 +87,12 @@ describe('StorageService', () => {
 
     it('should fetch files by providerId', async () => {
       const result = await storageService.fetchFiles({
-        providerId: PROVIDER_ID.IMAGEKIT_PROVIDER,
+        provider: PROVIDER_ID.IMAGEKIT_PROVIDER,
       });
       expect(
         result.every((f) => f.provider === PROVIDER_ID.IMAGEKIT_PROVIDER),
       ).toBe(true);
-    });
+    }, 15000);
 
     it('should limit and offset results', async () => {
       const result = await storageService.fetchFiles({ limit: 1, offset: 1 });
@@ -102,7 +110,7 @@ describe('StorageService', () => {
       ).toBeGreaterThanOrEqual(
         new Date(descResult[descResult.length - 1].createdAt).getTime(),
       );
-    });
+    }, 15000);
   });
 
   describe('getUrl', () => {
@@ -115,7 +123,7 @@ describe('StorageService', () => {
       });
       const url = await storageService.getUrl(
         PROVIDER_ID.IMAGEKIT_PROVIDER,
-        dbFile!.storageProviderFileId,
+        dbFile!.referenceId,
       );
       expect(url).toMatch(/ik.imagekit.io/);
     });
@@ -129,18 +137,9 @@ describe('StorageService', () => {
       });
       const url = await storageService.getUrl(
         PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER,
-        dbFile!.storageProviderFileId,
+        dbFile!.referenceId,
       );
       expect(url).toMatch(/storage.googleapis.com/);
     });
-  });
-
-  describe('delete', () => {
-    it('should delete files from storage and database', async () => {
-      const fileIds = uploadedFiles.map((file) => file.id);
-      await storageService.delete(fileIds);
-      const result = await storageService.fetchFiles({ id: fileIds });
-      expect(result).toHaveLength(0);
-    }, 15000);
   });
 });

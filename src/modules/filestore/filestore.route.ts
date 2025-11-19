@@ -4,31 +4,43 @@ import {
   DeleteFile,
   deleteFile,
 } from '@/modules/filestore/schemas/delete-files.schema';
-
-import {
-  UploadFiles,
-  uploadFilesSchema,
-} from '@/modules/filestore/schemas/upload-files.schema';
 import {
   FetchFiles,
   fetchFilesSchema,
 } from '@/modules/filestore/schemas/fetch-files.schema';
+import {
+  UploadFiles,
+  uploadFilesSchema,
+} from '@/modules/filestore/schemas/upload-files.schema';
+import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 import { file } from '@/modules/storage/schemas/file.schema';
 import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
 import { asRouteFunction, asRouteOptions } from '@/plugins/routes';
 import fastifyMultipart from '@fastify/multipart';
+import { createKeyv } from '@keyv/redis';
+import { createCache } from 'cache-manager';
 import { FastifyRequest } from 'fastify';
 import os from 'node:os';
 import z from 'zod';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 
 export const options = asRouteOptions({
-  prefix: '/filestore',
+  prefix: '/files',
 });
 
 export default asRouteFunction(async function (app) {
-  const storageService = new StorageService(db, await getStorageProviders());
+  const storageService = new StorageService(
+    createCache({
+      ttl: 1000 * 50 * 5, // 5 minutes
+      stores: [
+        createKeyv({
+          url: process.env.REDIS_URL,
+        }),
+      ],
+    }),
+    db,
+    await getStorageProviders(),
+  );
 
   await app.register(fastifyMultipart, {
     attachFieldsToBody: true,
@@ -61,7 +73,8 @@ export default asRouteFunction(async function (app) {
           Querystring: FetchFiles;
         }>,
       ) {
-        const files = await storageService.fetchFiles(request.query);
+        const { revalidate, ...query } = request.query;
+        const files = await storageService.fetchFiles(query, revalidate);
         return {
           data: { files },
         };
@@ -70,7 +83,7 @@ export default asRouteFunction(async function (app) {
 
     .route({
       method: 'POST',
-      url: '/upload',
+      url: '/',
       schema: {
         description: 'upload files',
         tags: ['Filestore'],

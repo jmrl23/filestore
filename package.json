@@ -24,6 +24,8 @@
     "@fastify/swagger": "^9.6.1",
     "@fastify/swagger-ui": "^5.2.3",
     "@google-cloud/storage": "^7.17.3",
+    "@keyv/redis": "^5.1.4",
+    "cache-manager": "^7.2.5",
     "detect-port": "^2.1.0",
     "drizzle-orm": "^0.44.7",
     "env-var": "^7.5.0",

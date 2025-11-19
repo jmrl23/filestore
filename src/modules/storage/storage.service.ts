@@ -4,6 +4,7 @@ import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 import { FetchFiles } from '@/modules/storage/schemas/fetch-files.schema';
 import { File } from '@/modules/storage/schemas/file.schema';
 import { MultipartFile } from '@fastify/multipart';
+import { Cache } from 'cache-manager';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { BadRequest } from 'http-errors';
@@ -12,6 +13,7 @@ type Db = ReturnType<typeof drizzle<{ file: typeof file }>>;
 
 export class StorageService {
   constructor(
+    private readonly cache: Cache,
     private readonly db: Db,
     private readonly storageProviders: StorageProvider[],
   ) {}
@@ -61,7 +63,15 @@ export class StorageService {
     return savedFiles;
   }
 
-  async fetchFiles(payload: FetchFiles = {}): Promise<File[]> {
+  async fetchFiles(
+    payload: FetchFiles = {},
+    revalidate: boolean = false,
+  ): Promise<File[]> {
+    const CACHE_KEY = `files:${JSON.stringify(payload)}`;
+    if (revalidate === true) await this.cache.del(CACHE_KEY);
+    const cachedFiles = await this.cache.get<File[]>(CACHE_KEY);
+    if (cachedFiles) return cachedFiles;
+
     const conditions: (SQL | undefined)[] = [];
     if (payload.id && payload.id.length > 0) {
       conditions.push(inArray(file.id, payload.id));
@@ -130,6 +140,7 @@ export class StorageService {
     const files = settledFiles
       .filter((f) => f.status === 'fulfilled')
       .map((f) => f.value);
+    await this.cache.set(CACHE_KEY, files);
     return files;
   }
 
