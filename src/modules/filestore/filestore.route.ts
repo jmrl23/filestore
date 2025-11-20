@@ -1,9 +1,16 @@
+import { cache } from '@/common/cache';
 import { db } from '@/common/db';
 import { multipartPrevalidator } from '@/modules/filestore/hooks/multipart-prevalidator';
 import {
   DeleteFile,
   deleteFile,
 } from '@/modules/filestore/schemas/delete-files.schema';
+import {
+  FetchFileParams,
+  fetchFileParamsSchema,
+  FetchFileQuery,
+  fetchFileQuerySchema,
+} from '@/modules/filestore/schemas/fetch-file.schema';
 import {
   FetchFiles,
   fetchFilesSchema,
@@ -18,8 +25,6 @@ import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
 import { asRouteFunction, asRouteOptions } from '@/plugins/routes';
 import fastifyMultipart from '@fastify/multipart';
-import { createKeyv } from '@keyv/redis';
-import { createCache } from 'cache-manager';
 import { FastifyRequest } from 'fastify';
 import os from 'node:os';
 import z from 'zod';
@@ -30,14 +35,7 @@ export const options = asRouteOptions({
 
 export default asRouteFunction(async function (app) {
   const storageService = new StorageService(
-    createCache({
-      ttl: 1000 * 50 * 5, // 5 minutes
-      stores: [
-        createKeyv({
-          url: process.env.REDIS_URL,
-        }),
-      ],
-    }),
+    cache,
     db,
     await getStorageProviders(),
   );
@@ -77,6 +75,41 @@ export default asRouteFunction(async function (app) {
         const files = await storageService.fetchFiles(query, revalidate);
         return {
           data: { files },
+        };
+      },
+    })
+
+    .route({
+      method: 'GET',
+      url: '/:fileId',
+      schema: {
+        description: 'fetch uploaded file',
+        tags: ['Filestore'],
+        params: fetchFileParamsSchema,
+        querystring: fetchFileQuerySchema,
+        response: {
+          default: z.toJSONSchema(
+            z.object({
+              data: z.object({
+                file,
+              }),
+            }),
+            { target: 'draft-7' },
+          ),
+        },
+      },
+      async handler(
+        request: FastifyRequest<{
+          Params: FetchFileParams;
+          Querystring: FetchFileQuery;
+        }>,
+      ) {
+        const file = await storageService.fetchFile(
+          request.params.fileId,
+          request.query.revalidate,
+        );
+        return {
+          data: { file },
         };
       },
     })

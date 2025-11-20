@@ -7,7 +7,8 @@ import { MultipartFile } from '@fastify/multipart';
 import { Cache } from 'cache-manager';
 import { and, asc, desc, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
-import { BadRequest } from 'http-errors';
+import { BadRequest, NotFound } from 'http-errors';
+import ms from 'ms';
 
 type Db = ReturnType<typeof drizzle<{ file: typeof file }>>;
 
@@ -140,13 +141,44 @@ export class StorageService {
     const files = settledFiles
       .filter((f) => f.status === 'fulfilled')
       .map((f) => f.value);
-    await this.cache.set(CACHE_KEY, files);
+
+    await this.cache.set(CACHE_KEY, files, ms('5m'));
     return files;
   }
 
-  async getUrl(storageId: PROVIDER_ID, fileId: string): Promise<string> {
+  async fetchFile(fileId: string, revalidate: boolean = false): Promise<File> {
+    const CACHE_KEY = `file:${fileId}`;
+    if (revalidate === true) await this.cache.del(CACHE_KEY);
+    const [result] = await this.db
+      .select({
+        id: file.id,
+        createdAt: file.createdAt,
+        updatedAt: file.updatedAt,
+        name: file.name,
+        size: file.size,
+        path: file.path,
+        mimetype: file.mimetype,
+        provider: file.provider,
+        referenceId: file.referenceId,
+      })
+      .from(file)
+      .where(eq(file.id, fileId));
+    if (!result) {
+      throw NotFound('File not found');
+    }
+    const url = await this.getUrl(
+      result.provider as PROVIDER_ID,
+      result.referenceId,
+    );
+    delete (result as Record<string, unknown>).referenceId;
+    const referenceFile = { ...result, url };
+    await this.cache.set(CACHE_KEY, referenceFile, ms('5m'));
+    return referenceFile;
+  }
+
+  async getUrl(storageId: PROVIDER_ID, referenceId: string): Promise<string> {
     const storageProvider = this.getStoragePovider(storageId);
-    const url = await storageProvider.getUrl(fileId);
+    const url = await storageProvider.getUrl(referenceId);
     return url;
   }
 
@@ -159,7 +191,7 @@ export class StorageService {
         provider: file.provider,
         refereceId: file.referenceId,
       });
-    Promise.all(
+    Promise.allSettled(
       files.map(async (file) => {
         const storageProvider = this.getStoragePovider(file.provider);
         await storageProvider.delete(file.refereceId);

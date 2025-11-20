@@ -1,20 +1,56 @@
 import { db } from '@/common/db';
+import {
+  FileInfo,
+  StorageProvider,
+} from '@/modules/storage/interfaces/storage-provider.interface';
 import { PROVIDER_ID } from '@/modules/storage/providers/constants';
 import { File } from '@/modules/storage/schemas/file.schema';
-import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
 import { MultipartFile } from '@fastify/multipart';
 import { createCache } from 'cache-manager';
-import { BadRequest } from 'http-errors';
+import { BadRequest, NotFound } from 'http-errors';
+
+class MockStorageProvider implements StorageProvider {
+  constructor(public readonly id: PROVIDER_ID) {}
+
+  async upload(
+    buffer: Buffer,
+    name: string,
+    location?: string,
+  ): Promise<FileInfo> {
+    return {
+      id: Math.random().toString(36).substring(7),
+      name: name,
+      path: location,
+      mimetype: 'text/plain',
+      size: buffer.length,
+    };
+  }
+
+  async delete(): Promise<void> {}
+
+  async getUrl(fileId: string): Promise<string> {
+    if (this.id === PROVIDER_ID.IMAGEKIT_PROVIDER) {
+      return `https://ik.imagekit.io/mock/${fileId}`;
+    }
+    if (this.id === PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER) {
+      return `https://storage.googleapis.com/mock/${fileId}`;
+    }
+    return '';
+  }
+}
 
 describe('StorageService', () => {
   let storageService: StorageService;
   const uploadedFiles: File[] = [];
 
   beforeAll(async () => {
-    const providers = await getStorageProviders();
+    const providers = [
+      new MockStorageProvider(PROVIDER_ID.IMAGEKIT_PROVIDER),
+      new MockStorageProvider(PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER),
+    ];
     storageService = new StorageService(createCache(), db, providers);
-  }, 30000);
+  });
 
   afterAll(async () => {
     if (uploadedFiles.length > 0) {
@@ -46,7 +82,7 @@ describe('StorageService', () => {
         mimetype: 'text/plain',
       });
       uploadedFiles.push(...result);
-    }, 15000);
+    });
 
     it('should upload files using google-cloud-storage-provider', async () => {
       const result = await storageService.upload(
@@ -62,7 +98,7 @@ describe('StorageService', () => {
         mimetype: 'text/plain',
       });
       uploadedFiles.push(...result);
-    }, 15000);
+    });
 
     it('should throw BadRequest for invalid storage provider', async () => {
       await expect(
@@ -92,7 +128,7 @@ describe('StorageService', () => {
       expect(
         result.every((f) => f.provider === PROVIDER_ID.IMAGEKIT_PROVIDER),
       ).toBe(true);
-    }, 15000);
+    });
 
     it('should limit and offset results', async () => {
       const result = await storageService.fetchFiles({ limit: 1, offset: 1 });
@@ -110,7 +146,26 @@ describe('StorageService', () => {
       ).toBeGreaterThanOrEqual(
         new Date(descResult[descResult.length - 1].createdAt).getTime(),
       );
-    }, 15000);
+    });
+  });
+
+  describe('fetchFile', () => {
+    it('should fetch a single file by id', async () => {
+      const file = uploadedFiles[0];
+      const result = await storageService.fetchFile(file.id);
+      expect(result).toMatchObject({
+        id: file.id,
+        name: expect.any(String),
+        size: 5,
+        mimetype: 'text/plain',
+      });
+    });
+
+    it('should throw NotFound if file not found', async () => {
+      await expect(
+        storageService.fetchFile('00000000-0000-0000-0000-000000000000'),
+      ).rejects.toThrow(NotFound);
+    });
   });
 
   describe('getUrl', () => {
