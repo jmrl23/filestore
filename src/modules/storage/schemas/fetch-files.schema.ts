@@ -1,4 +1,4 @@
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import { z } from 'zod';
 
 export type FetchFiles = z.infer<typeof fetchFiles>;
@@ -10,7 +10,7 @@ export const fetchFiles = z.object({
       lte: z.iso.datetime(),
     })
     .optional(),
-  provider: z.enum(Object.values(PROVIDER_ID)).optional(),
+  provider: z.enum(Object.values(PROVIDER)).optional(),
   location: z.string().optional(),
   mimetype: z.string().optional(),
   name: z.string().optional(),

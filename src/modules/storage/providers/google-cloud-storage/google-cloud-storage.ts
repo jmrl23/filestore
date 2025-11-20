@@ -6,7 +6,7 @@ import {
 import { Bucket, SaveOptions, Storage } from '@google-cloud/storage';
 import mime from 'mime-types';
 import path from 'node:path';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 
 /**
  * A storage provider that uses Google Cloud Storage.
@@ -39,7 +39,7 @@ import { PROVIDER_ID } from '@/modules/storage/providers/constants';
  * ```
  */
 export class GoogleCloudStorage implements StorageProvider {
-  readonly id = PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER;
+  readonly id = PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER;
   private bucket!: Bucket;
 
   constructor(

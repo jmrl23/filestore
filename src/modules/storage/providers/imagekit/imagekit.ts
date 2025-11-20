@@ -2,7 +2,7 @@ import {
   FileInfo,
   StorageProvider,
 } from '@/modules/storage/interfaces/storage-provider.interface';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import ImageKit from 'imagekit';
 import { UploadOptions } from 'imagekit/dist/libs/interfaces';
 import mime from 'mime-types';
@@ -32,7 +32,7 @@ import mime from 'mime-types';
  * ```
  */
 export class Imagekit implements StorageProvider {
-  readonly id = PROVIDER_ID.IMAGEKIT_PROVIDER;
+  readonly id = PROVIDER.IMAGEKIT_PROVIDER;
 
   constructor(private readonly imagekit: ImageKit) {}
 

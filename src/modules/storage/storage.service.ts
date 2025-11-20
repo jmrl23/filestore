@@ -1,6 +1,6 @@
 import { file } from '@/db/schema';
 import { StorageProvider } from '@/modules/storage/interfaces/storage-provider.interface';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import { FetchFiles } from '@/modules/storage/schemas/fetch-files.schema';
 import { File } from '@/modules/storage/schemas/file.schema';
 import { MultipartFile } from '@fastify/multipart';
@@ -28,7 +28,7 @@ export class StorageService {
   }
 
   async upload(
-    storageId: PROVIDER_ID,
+    storageId: PROVIDER,
     files: MultipartFile[],
     location?: string,
   ): Promise<File[]> {
@@ -167,7 +167,7 @@ export class StorageService {
       throw NotFound('File not found');
     }
     const url = await this.getUrl(
-      result.provider as PROVIDER_ID,
+      result.provider as PROVIDER,
       result.referenceId,
     );
     delete (result as Record<string, unknown>).referenceId;
@@ -176,7 +176,7 @@ export class StorageService {
     return referenceFile;
   }
 
-  async getUrl(storageId: PROVIDER_ID, referenceId: string): Promise<string> {
+  async getUrl(storageId: PROVIDER, referenceId: string): Promise<string> {
     const storageProvider = this.getStoragePovider(storageId);
     const url = await storageProvider.getUrl(referenceId);
     return url;

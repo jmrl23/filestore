@@ -1,7 +1,7 @@
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 
 export interface StorageProvider {
-  readonly id: PROVIDER_ID;
+  readonly id: PROVIDER;
   upload<O = Record<string, unknown>>(
     buffer: Buffer,
     name: string,

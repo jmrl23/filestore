@@ -1,6 +1,6 @@
 import z from 'zod';
 import type { MultipartFile } from '@fastify/multipart';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 
 const LIMITS = {
   maxFiles: 10,
@@ -48,7 +48,7 @@ export const uploadFilesSchema = {
     },
     provider: {
       type: 'string',
-      enum: Object.values(PROVIDER_ID),
+      enum: Object.values(PROVIDER),
     },
   },
 };

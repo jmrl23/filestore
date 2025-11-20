@@ -19,7 +19,7 @@ import {
   UploadFiles,
   uploadFilesSchema,
 } from '@/modules/filestore/schemas/upload-files.schema';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import { file } from '@/modules/storage/schemas/file.schema';
 import { getStorageProviders } from '@/modules/storage/storage-providers';
 import { StorageService } from '@/modules/storage/storage.service';
@@ -142,7 +142,7 @@ export default asRouteFunction(async function (app) {
           tmpdir: os.tmpdir(),
         });
         const files = await storageService.upload(
-          request.body.provider as PROVIDER_ID,
+          request.body.provider as PROVIDER,
           request.savedRequestFiles!,
           request.body.path ?? '',
         );

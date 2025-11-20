@@ -3,7 +3,7 @@ import {
   FileInfo,
   StorageProvider,
 } from '@/modules/storage/interfaces/storage-provider.interface';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import { File } from '@/modules/storage/schemas/file.schema';
 import { StorageService } from '@/modules/storage/storage.service';
 import { MultipartFile } from '@fastify/multipart';
@@ -11,7 +11,7 @@ import { createCache } from 'cache-manager';
 import { BadRequest, NotFound } from 'http-errors';
 
 class MockStorageProvider implements StorageProvider {
-  constructor(public readonly id: PROVIDER_ID) {}
+  constructor(public readonly id: PROVIDER) {}
 
   async upload(
     buffer: Buffer,
@@ -30,10 +30,10 @@ class MockStorageProvider implements StorageProvider {
   async delete(): Promise<void> {}
 
   async getUrl(fileId: string): Promise<string> {
-    if (this.id === PROVIDER_ID.IMAGEKIT_PROVIDER) {
+    if (this.id === PROVIDER.IMAGEKIT_PROVIDER) {
       return `https://ik.imagekit.io/mock/${fileId}`;
     }
-    if (this.id === PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER) {
+    if (this.id === PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER) {
       return `https://storage.googleapis.com/mock/${fileId}`;
     }
     return '';
@@ -46,8 +46,8 @@ describe('StorageService', () => {
 
   beforeAll(async () => {
     const providers = [
-      new MockStorageProvider(PROVIDER_ID.IMAGEKIT_PROVIDER),
-      new MockStorageProvider(PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER),
+      new MockStorageProvider(PROVIDER.IMAGEKIT_PROVIDER),
+      new MockStorageProvider(PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER),
     ];
     storageService = new StorageService(createCache(), db, providers);
   });
@@ -70,7 +70,7 @@ describe('StorageService', () => {
   describe('upload', () => {
     it('should upload files using imagekit-provider', async () => {
       const result = await storageService.upload(
-        PROVIDER_ID.IMAGEKIT_PROVIDER,
+        PROVIDER.IMAGEKIT_PROVIDER,
         files as MultipartFile[],
         'development/filestore',
       );
@@ -86,7 +86,7 @@ describe('StorageService', () => {
 
     it('should upload files using google-cloud-storage-provider', async () => {
       const result = await storageService.upload(
-        PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER,
+        PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER,
         files as MultipartFile[],
         'development/filestore',
       );
@@ -103,7 +103,7 @@ describe('StorageService', () => {
     it('should throw BadRequest for invalid storage provider', async () => {
       await expect(
         storageService.upload(
-          'invalid-provider' as PROVIDER_ID,
+          'invalid-provider' as PROVIDER,
           files as MultipartFile[],
           'development/filestore',
         ),
@@ -123,10 +123,10 @@ describe('StorageService', () => {
 
     it('should fetch files by providerId', async () => {
       const result = await storageService.fetchFiles({
-        provider: PROVIDER_ID.IMAGEKIT_PROVIDER,
+        provider: PROVIDER.IMAGEKIT_PROVIDER,
       });
       expect(
-        result.every((f) => f.provider === PROVIDER_ID.IMAGEKIT_PROVIDER),
+        result.every((f) => f.provider === PROVIDER.IMAGEKIT_PROVIDER),
       ).toBe(true);
     });
 
@@ -171,13 +171,13 @@ describe('StorageService', () => {
   describe('getUrl', () => {
     it('should get url from imagekit-provider', async () => {
       const file = uploadedFiles.find(
-        (f) => f.provider === PROVIDER_ID.IMAGEKIT_PROVIDER,
+        (f) => f.provider === PROVIDER.IMAGEKIT_PROVIDER,
       )!;
       const dbFile = await db.query.file.findFirst({
         where: (fileTable, { eq }) => eq(fileTable.id, file.id),
       });
       const url = await storageService.getUrl(
-        PROVIDER_ID.IMAGEKIT_PROVIDER,
+        PROVIDER.IMAGEKIT_PROVIDER,
         dbFile!.referenceId,
       );
       expect(url).toMatch(/ik.imagekit.io/);
@@ -185,13 +185,13 @@ describe('StorageService', () => {
 
     it('should get url from google-cloud-storage-provider', async () => {
       const file = uploadedFiles.find(
-        (f) => f.provider === PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER,
+        (f) => f.provider === PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER,
       )!;
       const dbFile = await db.query.file.findFirst({
         where: (fileTable, { eq }) => eq(fileTable.id, file.id),
       });
       const url = await storageService.getUrl(
-        PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER,
+        PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER,
         dbFile!.referenceId,
       );
       expect(url).toMatch(/storage.googleapis.com/);

@@ -2,7 +2,7 @@ import { cache } from '@/common/cache';
 import filestoreRoutes, {
   options as filestoreOptions,
 } from '@/modules/filestore/filestore.route';
-import { PROVIDER_ID } from '@/modules/storage/providers/constants';
+import { PROVIDER } from '@/modules/storage/providers/constants';
 import { ajvFilePlugin } from '@fastify/multipart';
 import fastify, { FastifyInstance } from 'fastify';
 import FormData from 'form-data';
@@ -48,7 +48,7 @@ describe('Filestore Routes', () => {
           filename: 'test.txt',
           contentType: 'text/plain',
         });
-        form.append('provider', PROVIDER_ID.IMAGEKIT_PROVIDER);
+        form.append('provider', PROVIDER.IMAGEKIT_PROVIDER);
         form.append('path', 'development/filestore');
 
         const response = await app.inject({
@@ -79,7 +79,7 @@ describe('Filestore Routes', () => {
           filename: 'test.txt',
           contentType: 'text/plain',
         });
-        form.append('provider', PROVIDER_ID.GOOGLE_CLOUD_STORAGE_PROVIDER);
+        form.append('provider', PROVIDER.GOOGLE_CLOUD_STORAGE_PROVIDER);
         form.append('path', 'development/filestore');
 
         const response = await app.inject({
@@ -148,7 +148,7 @@ describe('Filestore Routes', () => {
           filename: 'delete-me.txt',
           contentType: 'text/plain',
         });
-        form.append('provider', PROVIDER_ID.IMAGEKIT_PROVIDER);
+        form.append('provider', PROVIDER.IMAGEKIT_PROVIDER);
         form.append('path', 'development/filestore');
         const createResponse = await app.inject({
           method: 'POST',
