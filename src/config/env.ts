@@ -15,3 +15,5 @@ export const TRUST_PROXY = env
 export const CORS_ORIGIN = env.get('CORS_ORIGIN').asArray(',');
 
 export const DATABASE_URL = env.get('DATABASE_URL').required().asString();
+
+export const API_KEY = env.get('API_KEY').required().asString();

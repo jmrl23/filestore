@@ -32,13 +32,13 @@ export const swagger = fastifyPlugin<Options>(async function (app, options) {
       },
       servers,
       components: {
-        // securitySchemes: {
-        //   bearerAuth: {
-        //     type: 'http',
-        //     scheme: 'bearer',
-        //     bearerFormat: 'JWT',
-        //   },
-        // },
+        securitySchemes: {
+          apiKeyAuth: {
+            type: 'apiKey',
+            in: 'header',
+            name: 'X-API-Key',
+          },
+        },
       },
     },
   });

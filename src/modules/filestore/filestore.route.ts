@@ -1,6 +1,7 @@
 import { cache } from '@/common/cache';
 import { db } from '@/common/db';
 import { multipartPrevalidator } from '@/modules/filestore/hooks/multipart-prevalidator';
+import { requiredAuth } from '@/modules/filestore/hooks/required-auth';
 import {
   DeleteFile,
   deleteFile,
@@ -47,6 +48,8 @@ export default asRouteFunction(async function (app) {
     },
   });
 
+  app.addHook('onRequest', requiredAuth);
+
   app
     .route({
       method: 'GET',
@@ -54,9 +57,10 @@ export default asRouteFunction(async function (app) {
       schema: {
         description: 'list uploaded files',
         tags: ['Filestore'],
+        security: [{ apiKeyAuth: [] }],
         querystring: fetchFilesSchema,
         response: {
-          default: z.toJSONSchema(
+          200: z.toJSONSchema(
             z.object({
               data: z.object({
                 files: z.array(file),
@@ -85,10 +89,11 @@ export default asRouteFunction(async function (app) {
       schema: {
         description: 'fetch uploaded file',
         tags: ['Filestore'],
+        security: [{ apiKeyAuth: [] }],
         params: fetchFileParamsSchema,
         querystring: fetchFileQuerySchema,
         response: {
-          default: z.toJSONSchema(
+          200: z.toJSONSchema(
             z.object({
               data: z.object({
                 file,
@@ -120,10 +125,11 @@ export default asRouteFunction(async function (app) {
       schema: {
         description: 'upload files',
         tags: ['Filestore'],
+        security: [{ apiKeyAuth: [] }],
         consumes: ['multipart/form-data'],
         body: uploadFilesSchema,
         response: {
-          default: z.toJSONSchema(
+          201: z.toJSONSchema(
             z.object({
               data: z.array(file),
             }),
@@ -160,6 +166,7 @@ export default asRouteFunction(async function (app) {
       schema: {
         description: 'delete files',
         tags: ['Filestore'],
+        security: [{ apiKeyAuth: [] }],
         querystring: z.toJSONSchema(deleteFile, { target: 'draft-7' }),
         response: {
           204: z.toJSONSchema(z.string(), { target: 'draft-7' }),
