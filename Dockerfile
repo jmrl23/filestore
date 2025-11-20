@@ -1,7 +1,7 @@
 FROM node:lts-alpine AS builder
 WORKDIR /app
 
-COPY ./package.json ./tsconfig.json ./yarn.lock ./
+COPY ./package.json ./tsconfig.json ./drizzle.config.ts ./yarn.lock ./
 COPY ./src ./src
 
 RUN yarn install && \
@@ -13,7 +13,7 @@ WORKDIR /app
 
 COPY --from=builder /app/build ./build
 COPY ./public ./public
-COPY ./package.json ./yarn.lock ./
+COPY ./package.json ./drizzle.config.ts ./yarn.lock ./
 COPY ./www ./www
 
 RUN yarn install --production --frozen-lockfile && \

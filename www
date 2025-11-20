@@ -1,3 +1,5 @@
 #!/bin/sh
 
+npx drizzle-kit push
+
 node -r ./build/init.js $@
