@@ -47,14 +47,21 @@ export class StorageService {
     const uploadedFiles = await this.db
       .insert(file)
       .values(
-        uploads.map((file) => ({
-          name: file.name,
-          size: file.size,
-          mimetype: file.mimetype,
-          provider: storageId,
-          referenceId: file.id,
-          location: file.path || '/',
-        })),
+        uploads.map((file) => {
+          let location = file.path || '';
+          if (typeof location === 'string' && location) {
+            location = location.replace(/^\/+|\/+$/g, '');
+          }
+          location = `/${location}`;
+          return {
+            name: file.name,
+            size: file.size,
+            mimetype: file.mimetype,
+            provider: storageId,
+            referenceId: file.id,
+            location,
+          };
+        }),
       )
       .returning({
         id: file.id,
