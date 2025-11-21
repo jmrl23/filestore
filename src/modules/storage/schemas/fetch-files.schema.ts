@@ -4,22 +4,14 @@ import { z } from 'zod';
 export type FetchFiles = z.infer<typeof fetchFiles>;
 export const fetchFiles = z.object({
   id: z.array(z.uuid()).optional(),
-  createdAt: z
-    .object({
-      gte: z.iso.datetime(),
-      lte: z.iso.datetime(),
-    })
-    .optional(),
+  createdAtFrom: z.iso.datetime().optional(),
+  createdAtTo: z.iso.datetime().optional(),
   provider: z.enum(Object.values(PROVIDER)).optional(),
   location: z.string().optional(),
   mimetype: z.string().optional(),
   name: z.string().optional(),
-  size: z
-    .object({
-      gte: z.number().optional(),
-      lte: z.number().optional(),
-    })
-    .optional(),
+  sizeFrom: z.number().optional(),
+  sizeTo: z.number().optional(),
   limit: z.number().optional(),
   offset: z.number().optional(),
   order: z.enum(['asc', 'desc']).optional(),

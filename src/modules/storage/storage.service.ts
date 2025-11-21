@@ -5,7 +5,7 @@ import { FetchFiles } from '@/modules/storage/schemas/fetch-files.schema';
 import { File } from '@/modules/storage/schemas/file.schema';
 import { MultipartFile } from '@fastify/multipart';
 import { Cache } from 'cache-manager';
-import { and, asc, desc, eq, gte, ilike, inArray, lte, SQL } from 'drizzle-orm';
+import { and, asc, desc, eq, gte, ilike, inArray, lte, sql, SQL } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/node-postgres';
 import { BadRequest, NotFound } from 'http-errors';
 import ms from 'ms';
@@ -98,21 +98,17 @@ export class StorageService {
     if (payload.name) {
       conditions.push(ilike(file.name, `%${payload.name}%`));
     }
-    if (payload.createdAt) {
-      if (payload.createdAt.gte) {
-        conditions.push(gte(file.createdAt, payload.createdAt.gte));
-      }
-      if (payload.createdAt.lte) {
-        conditions.push(lte(file.createdAt, payload.createdAt.lte));
-      }
+    if (payload.createdAtFrom) {
+      conditions.push(gte(sql`${file.createdAt}::timestamptz`, payload.createdAtFrom));
     }
-    if (payload.size) {
-      if (payload.size.gte !== undefined) {
-        conditions.push(gte(file.size, payload.size.gte));
-      }
-      if (payload.size.lte !== undefined) {
-        conditions.push(lte(file.size, payload.size.lte));
-      }
+    if (payload.createdAtTo) {
+      conditions.push(lte(sql`${file.createdAt}::timestamptz`, payload.createdAtTo));
+    }
+    if (payload.sizeFrom !== undefined) {
+      conditions.push(gte(file.size, payload.sizeFrom));
+    }
+    if (payload.sizeTo !== undefined) {
+      conditions.push(lte(file.size, payload.sizeTo));
     }
     let query = this.db
       .select({

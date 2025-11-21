@@ -147,6 +147,30 @@ describe('StorageService', () => {
         new Date(descResult[descResult.length - 1].createdAt).getTime(),
       );
     });
+
+    it('should filter by createdAtFrom and createdAtTo', async () => {
+      const files = await storageService.fetchFiles({ order: 'asc' });
+      const midIndex = Math.floor(files.length / 2);
+      const midDate = new Date(files[midIndex].createdAt + 'Z');
+      
+      const fromResult = await storageService.fetchFiles({ createdAtFrom: midDate.toISOString() });
+      expect(fromResult.length).toBeGreaterThan(0);
+      expect(fromResult.every(f => new Date(f.createdAt + 'Z') >= midDate)).toBe(true);
+
+      const toResult = await storageService.fetchFiles({ createdAtTo: midDate.toISOString() });
+      expect(toResult.length).toBeGreaterThan(0);
+      expect(toResult.every(f => new Date(f.createdAt + 'Z') <= midDate)).toBe(true);
+    });
+
+    it('should filter by sizeFrom and sizeTo', async () => {
+      const sizeFromResult = await storageService.fetchFiles({ sizeFrom: 5 });
+      expect(sizeFromResult.length).toBeGreaterThan(0);
+      expect(sizeFromResult.every(f => f.size >= 5)).toBe(true);
+
+      const sizeToResult = await storageService.fetchFiles({ sizeTo: 5 });
+      expect(sizeToResult.length).toBeGreaterThan(0);
+      expect(sizeToResult.every(f => f.size <= 5)).toBe(true);
+    });
   });
 
   describe('fetchFile', () => {
