@@ -62,6 +62,9 @@ export class GoogleCloudStorage implements StorageProvider {
     location?: string,
     options?: O,
   ): Promise<FileInfo> {
+    if (typeof location === 'string' && location) {
+      location = location.replace(/^\/+|\/+$/g, '');
+    }
     const filepath = path.join(location ?? '', rename(name));
     const file = this.bucket.file(filepath);
     const mimetype = mime.lookup(name) || 'application/octet-stream';

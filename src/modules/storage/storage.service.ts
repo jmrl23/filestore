@@ -53,6 +53,7 @@ export class StorageService {
           mimetype: file.mimetype,
           provider: storageId,
           referenceId: file.id,
+          location: file.path || '/',
         })),
       )
       .returning({
