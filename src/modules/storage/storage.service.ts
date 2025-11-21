@@ -44,6 +44,7 @@ export class StorageService {
     )
       .filter((f) => f.status === 'fulfilled')
       .map((f) => f.value);
+    if (uploads.length < 1) return [];
     const uploadedFiles = await this.db
       .insert(file)
       .values(
@@ -59,7 +60,7 @@ export class StorageService {
             mimetype: file.mimetype,
             provider: storageId,
             referenceId: file.id,
-            location,
+            path: location,
           };
         }),
       )
