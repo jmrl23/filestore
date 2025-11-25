@@ -12,7 +12,6 @@ export async function getStorageProviders(): Promise<StorageProvider[]> {
 async function getGoogleStorage(): Promise<StorageProvider> {
   const GOOGLE_APPLICATION_CREDENTIALS = env
     .get('GOOGLE_APPLICATION_CREDENTIALS')
-    .required()
     .asString();
   const STORAGE_PROVIDER_GOOGLE_CLOUD_STORAGE_BUCKET_NAME = env
     .get('STORAGE_PROVIDER_GOOGLE_CLOUD_STORAGE_BUCKET_NAME')
