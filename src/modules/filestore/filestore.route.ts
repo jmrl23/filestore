@@ -51,6 +51,7 @@ export default asRouteFunction(async function (app) {
   app.addHook('onRequest', requiredAuth);
 
   app
+
     .route({
       method: 'GET',
       url: '/',
@@ -122,6 +123,12 @@ export default asRouteFunction(async function (app) {
     .route({
       method: 'POST',
       url: '/',
+      config: {
+        rateLimit: {
+          max: 100,
+          timeWindow: '5m',
+        },
+      },
       schema: {
         description: 'upload files',
         tags: ['Filestore'],
@@ -163,6 +170,12 @@ export default asRouteFunction(async function (app) {
     .route({
       method: 'DELETE',
       url: '/',
+      config: {
+        rateLimit: {
+          max: 10,
+          timeWindow: '5m',
+        },
+      },
       schema: {
         description: 'delete files',
         tags: ['Filestore'],

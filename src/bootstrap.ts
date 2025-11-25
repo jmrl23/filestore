@@ -1,15 +1,26 @@
-import { CORS_ORIGIN } from '@/config/env';
-import fastifyCors from '@fastify/cors';
-import fastifyEtag from '@fastify/etag';
-import fastifyStatic from '@fastify/static';
+import { CORS_ORIGIN, REDIS_URL } from '@/config/env';
 import { routes } from '@/plugins/routes';
 import { swagger } from '@/plugins/swagger';
+import fastifyCors from '@fastify/cors';
+import fastifyEtag from '@fastify/etag';
+import fastifyRateLimit from '@fastify/rate-limit';
+import fastifyStatic from '@fastify/static';
 import { fastifyPlugin } from 'fastify-plugin';
+import Redis from 'ioredis';
 import path from 'node:path';
 
 interface Options {}
 
 export const bootstrap = fastifyPlugin<Options>(async function bootstrap(app) {
+  await app.register(fastifyRateLimit, {
+    max: 300,
+    timeWindow: '5m',
+    nameSpace: 'rate_limit:',
+    redis: new Redis(REDIS_URL),
+    global: true,
+    logLevel: 'silent',
+  });
+
   await app.register(fastifyEtag);
 
   if (CORS_ORIGIN) {
